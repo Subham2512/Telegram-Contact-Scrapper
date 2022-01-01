@@ -2,8 +2,9 @@ let minimist = require("minimist");
 let pupp = require("puppeteer");
 let fs = require("fs");
 let args = minimist(process.argv);
-let json = fs.readFileSync(args.config,"utf-8");
-let configJson = JSON.parse(json);
+let vCardsJS = require("vcards-js");
+// let json = fs.readFileSync(args.config,"utf-8");
+// let configJson = JSON.parse(json);
 let excel = require("excel4node");
 // node contacts.js --url"=https://web.telegram.org/z/" --config=config.json --excel=Contacts.csv
 async function run(){
@@ -22,14 +23,14 @@ async function run(){
 
     await page.goto(args.url);
     
-    await page.waitFor(20000);
+    // await page.waitFor(20000);
 
     // await page.click('div');
 
     await page.waitForSelector('div[class="animated-menu-icon"]');
     await page.click('div[class="animated-menu-icon"]');
 
-    await page.waitFor(10000);
+    // await page.waitFor(10000);
 
     try {
         await page.waitForSelector('i[class="icon-user"]', {timeout: 5000});
@@ -43,8 +44,9 @@ async function run(){
     let i = 1;
     
     while (true){
-        let a = '#LeftColumn-main > div.Transition.zoom-fade > div.active > div > div:nth-child('+i+') > div > div.ChatInfo > div.info > div.title';
+        let a = '#LeftColumn-main > div.Transition.zoom-fade > div:nth-child(2) > div > div:nth-child('+i+') > div > div.ChatInfo > div.info > div.title';
         // console.log(a);
+        // await page.waitFor(1000);
         try{
             await page.waitForSelector(a);
             await page.click(a);
@@ -52,7 +54,7 @@ async function run(){
         catch(error){
             break;
         }
-        
+        // #LeftColumn-main > div.Transition.zoom-fade > div.Transition__slide--active > div > div:nth-child(1) > div > div.ChatInfo > div.info > div.title
 
         await page.waitForSelector('div[class="Transition slide-fade"]');
         await page.click('div[class="Transition slide-fade"]');
@@ -74,13 +76,20 @@ async function run(){
             number : num,
         };
 
-        // console.log(name)
-        // console.log(number);
         contacts.push(info);
         i++;
+        let j = 50
+        if (i == j){
+            i = 20
+        }
+        // console.log(nam)
+        // console.log(num);
+        // console.log(i)
         
     }
     createExcelFile(contacts);
+    createVCF(contacts);
+    // console.log(vCard.getFormattedString());
 
 }
 function createExcelFile(info){
@@ -93,6 +102,14 @@ function createExcelFile(info){
         sheet.cell(2+i,2).string(info[i].number);
     }
     wb.write(args.excel);
+}
+function createVCF(info){
+    let vCard = vCardsJS();
+    for (let i=0;i<info.length;i++){
+        vCard.firstName = info[i].name;
+        vCard.workPhone = info[i].number;
+        vCard.saveToFile("./vcfs/"+i+".vcf");
+    }
 }
 run();
 
